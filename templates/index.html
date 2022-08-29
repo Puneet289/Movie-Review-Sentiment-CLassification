@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <title>Movie Review Sentiment Prediction</title>
+
+    </head>
+
+    <body>
+            <h1><em>Movie Review Sentiment Prediction</em></h1>
+            <form method="post">
+                <label for="review">Enter the review:</label>
+                <br>
+                <textarea name="review" rows="9" cols="90"></textarea>
+                <br>
+                <button type="submit" name="predict">Predict Sentiment</button>
+            </form>
+
+            <hr>
+            <p>
+                {% if result %}
+                    Review:{{ result['review'] }}
+                    <br>
+                    Sentiment:{{ result['prediction'] }} ({{ result['pred_prob'] }})
+                {% endif %}
+            </p>
+        <a href="{{ url_for('about') }}"> About </a>
+    </body>
+</html>

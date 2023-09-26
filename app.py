@@ -1,56 +1,50 @@
-from flask import request
-from flask import Flask
+from flask import Flask, render_template, request, url_for
 from sentence_transformers import SentenceTransformer
-from keras.models import load_model
-import flask
+from tensorflow.keras.models import load_model
+
 import re
+
 import nltk
-
-
 nltk.download('stopwords')
 nltk.download('punkt')
 nltk.download('wordnet')
 
+model_st = SentenceTransformer('nli-roberta-base')
 model = load_model('moviereview.h5')
 
-
-
 def cleanText(text):
-  STOPWORDS=nltk.corpus.stopwords.words('english')
-  text=text.lower()
-  text=re.sub(r'<[a-z]+(\s)*/*>'," ",text)
-  text=re.sub(r'[,.?!]'," ",text)
-  text=[word for word in text.split(' ') if word not in STOPWORDS]
+    STOPWORDS = nltk.corpus.stopwords.words('english')
 
-  return ' '.join(text)
+    text = text.lower()
+    text = re.sub(r'<([A-Za-z]+(\s)*/*)>', '', text)
+    text = re.sub(r'[,.!?]', ' ', text)
+    text = [word for word in text.split(' ') if word not in STOPWORDS]
 
+    return ' '.join(text)
 
 def processText(text):
-    embeddings=SentenceTransformer('nli-roberta-base').encode(text)
-    embeddings=embeddings.reshape(1,768)
+    text = cleanText(text)
+    embeddings = model_st.encode(text)
+    embeddings = embeddings.reshape(1,768)
     return embeddings
 
 app = Flask(__name__)
 
-# @app.route('/')
-# def index():
-#     return flask.render_template('index.html')
-
-@app.route('/', methods=['POST','GET'])
-def predict():
-    if request.method=='POST':
+@app.route('/', methods=['POST', 'GET'])
+def home():
+    if request.method == 'POST':
         review = request.form['review']
-        review_fin=processText(review)
-        pred_prob=model.predict(review_fin)[0][0]
-        prediction='Postive' if pred_prob>=0.5 else 'Negative'
-        result={'prediction':prediction,'review':review,'pred_prob':pred_prob if prediction == 'Positive' else 1-pred_prob}
-        return flask.render_template('index.html',result=result)
+        review_ebd = processText(review)
+        pred_prob = model.predict(review_ebd)[0][0]
+        prediction = 'Positive' if pred_prob >= 0.5 else 'Negative'
+        result = {'prediction' : prediction, 'review' : review, 'pred_prob' : pred_prob if prediction is 'Positive' else 1-pred_prob}
+        return render_template('home.html', result=result)
     else:
-        return flask.render_template('index.html')
+        return render_template('home.html')
 
-@app.route('/about')
+@app.route('/about/')
 def about():
-    return flask.render_template('about.html')
+    return render_template('about.html')
 
-if __name__=='__main__':
+if __name__ == '__main__':
     app.run(debug=False)
